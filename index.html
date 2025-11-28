@@ -13,13 +13,144 @@
         color: white;
       }
       
+      /* Animación Ken Burns mejorada */
       .ken-burns {
-        animation: kenBurns 20s infinite alternate;
+        animation: kenBurns 20s infinite alternate ease-in-out;
       }
 
       @keyframes kenBurns {
-        0% { transform: scale(1); }
-        100% { transform: scale(1.15); }
+        0% { transform: scale(1) translate(0, 0); }
+        25% { transform: scale(1.1) translate(-2%, -1%); }
+        50% { transform: scale(1.15) translate(1%, 2%); }
+        75% { transform: scale(1.1) translate(2%, -1%); }
+        100% { transform: scale(1.2) translate(-1%, 1%); }
+      }
+      
+      /* Animación de copos de nieve */
+      .snowflake {
+        animation: snowfall linear infinite;
+        animation-duration: 10s;
+      }
+      
+      @keyframes snowfall {
+        0% {
+          transform: translateY(-10vh) rotate(0deg);
+          opacity: 0;
+        }
+        10% {
+          opacity: 1;
+        }
+        90% {
+          opacity: 1;
+        }
+        100% {
+          transform: translateY(110vh) rotate(720deg);
+          opacity: 0;
+        }
+      }
+      
+      /* Animación de entrada con escala */
+      @keyframes fadeInScale {
+        0% {
+          opacity: 0;
+          transform: scale(0.9);
+        }
+        100% {
+          opacity: 1;
+          transform: scale(1);
+        }
+      }
+      
+      /* Animación de entrada suave */
+      @keyframes fadeIn {
+        from { opacity: 0; }
+        to { opacity: 1; }
+      }
+      
+      /* Animación de entrada desde abajo */
+      @keyframes fadeInUp {
+        from {
+          opacity: 0;
+          transform: translateY(30px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+      
+      /* Efecto de brillo pulsante */
+      @keyframes glow {
+        0%, 100% {
+          box-shadow: 0 0 20px rgba(255, 215, 0, 0.3);
+        }
+        50% {
+          box-shadow: 0 0 40px rgba(255, 215, 0, 0.6);
+        }
+      }
+      
+      /* Gradiente radial para efectos de luz */
+      .bg-gradient-radial {
+        background: radial-gradient(circle at center, var(--tw-gradient-from), var(--tw-gradient-to));
+      }
+      
+      /* Transiciones adicionales */
+      .rotateY-90 {
+        transform: rotateY(90deg);
+      }
+      .-rotateY-90 {
+        transform: rotateY(-90deg);
+      }
+      .rotateY-0 {
+        transform: rotateY(0deg);
+      }
+      
+      /* Clip path para efectos wipe */
+      .clip-path-left {
+        clip-path: inset(0 100% 0 0);
+      }
+      .clip-path-right {
+        clip-path: inset(0 0 0 100%);
+      }
+      .clip-path-full {
+        clip-path: inset(0 0 0 0);
+      }
+      
+      /* Efecto glitch navideño */
+      @keyframes glitchEffect {
+        0% { transform: translate(0); filter: hue-rotate(0deg); }
+        20% { transform: translate(-2px, 2px); filter: hue-rotate(90deg); }
+        40% { transform: translate(2px, -2px); filter: hue-rotate(180deg); }
+        60% { transform: translate(-2px, -2px); filter: hue-rotate(270deg); }
+        80% { transform: translate(2px, 2px); filter: hue-rotate(360deg); }
+        100% { transform: translate(0); filter: hue-rotate(0deg); }
+      }
+      
+      .glitch-active {
+        animation: glitchEffect 0.3s ease-in-out;
+      }
+      
+      /* Efecto de brillo para transiciones */
+      @keyframes shimmer {
+        0% { background-position: -200% 0; }
+        100% { background-position: 200% 0; }
+      }
+      
+      .shimmer-overlay {
+        background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+        background-size: 200% 100%;
+        animation: shimmer 1.5s ease-in-out;
+      }
+      
+      /* Perspective para efectos 3D */
+      .perspective-1000 {
+        perspective: 1000px;
+      }
+      
+      /* Mejora de suavidad en transiciones */
+      * {
+        -webkit-backface-visibility: hidden;
+        backface-visibility: hidden;
       }
     </style>
   <script type="importmap">
@@ -36,5 +167,6 @@
 </head>
   <body>
     <div id="root"></div>
+    <script type="module" src="/index.tsx"></script>
   </body>
 </html>
