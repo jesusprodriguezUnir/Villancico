@@ -9,15 +9,15 @@ interface LyricDisplayProps {
 }
 
 // Tipos de transiciones disponibles - más variedad para mejor calidad visual
-type TransitionType = 
-  | 'fade' 
-  | 'slideLeft' 
-  | 'slideRight' 
+type TransitionType =
+  | 'fade'
+  | 'slideLeft'
+  | 'slideRight'
   | 'slideUp'
   | 'slideDown'
-  | 'zoom' 
+  | 'zoom'
   | 'zoomRotate'
-  | 'blur' 
+  | 'blur'
   | 'crossfade'
   | 'flip'
   | 'rotate'
@@ -27,14 +27,14 @@ type TransitionType =
   | 'glitch';
 
 const TRANSITIONS: TransitionType[] = [
-  'fade', 
-  'slideLeft', 
-  'slideRight', 
+  'fade',
+  'slideLeft',
+  'slideRight',
   'slideUp',
   'slideDown',
-  'zoom', 
+  'zoom',
   'zoomRotate',
-  'blur', 
+  'blur',
   'crossfade',
   'flip',
   'rotate',
@@ -56,17 +56,17 @@ const LyricDisplay: FC<LyricDisplayProps> = ({ currentLyric, nextLyric, currentI
     if (currentLyric && currentLyric !== previousLyric) {
       setIsTransitioning(true);
       setImageLoaded(false);
-      
+
       // Seleccionar transición aleatoria o basada en sección
       const transitionIndex = currentIndex % TRANSITIONS.length;
       setCurrentTransition(TRANSITIONS[transitionIndex]);
-      
+
       // Guardar la letra anterior para crossfade
       const timer = setTimeout(() => {
         setPreviousLyric(currentLyric);
         setIsTransitioning(false);
       }, 1000); // Duración de la transición
-      
+
       return () => clearTimeout(timer);
     }
   }, [currentLyric, currentIndex]);
@@ -84,7 +84,7 @@ const LyricDisplay: FC<LyricDisplayProps> = ({ currentLyric, nextLyric, currentI
             Preparando la magia navideña...
           </h2>
           <p className="text-gray-300 text-lg">Dale play para comenzar el villancico</p>
-          
+
           {/* Copos de nieve animados */}
           <div className="absolute inset-0 overflow-hidden pointer-events-none">
             {[...Array(20)].map((_, i) => (
@@ -106,9 +106,9 @@ const LyricDisplay: FC<LyricDisplayProps> = ({ currentLyric, nextLyric, currentI
     );
   }
 
-  const bgImage = `https://image.pollinations.ai/prompt/${encodeURIComponent(currentLyric.visualDescription)}?width=1920&height=1080&nologo=true&seed=${currentLyric.time}`;
-  const prevBgImage = previousLyric 
-    ? `https://image.pollinations.ai/prompt/${encodeURIComponent(previousLyric.visualDescription)}?width=1920&height=1080&nologo=true&seed=${previousLyric.time}`
+  const bgImage = `https://image.pollinations.ai/prompt/${encodeURIComponent(currentLyric.visualDescription + ", cinematic lighting, 8k, photorealistic, masterpiece, highly detailed, 4k wallpaper")}?width=1920&height=1080&nologo=true&seed=${currentLyric.time}`;
+  const prevBgImage = previousLyric
+    ? `https://image.pollinations.ai/prompt/${encodeURIComponent(previousLyric.visualDescription + ", cinematic lighting, 8k, photorealistic, masterpiece, highly detailed, 4k wallpaper")}?width=1920&height=1080&nologo=true&seed=${previousLyric.time}`
     : null;
 
   // Clases de transición según el tipo - versión mejorada con más efectos
@@ -117,7 +117,7 @@ const LyricDisplay: FC<LyricDisplayProps> = ({ currentLyric, nextLyric, currentI
     const duration = 'duration-1000';
     const durationFast = 'duration-700';
     const durationSlow = 'duration-1500';
-    
+
     if (!isNew) {
       // Imagen saliente
       switch (currentTransition) {
@@ -188,18 +188,18 @@ const LyricDisplay: FC<LyricDisplayProps> = ({ currentLyric, nextLyric, currentI
   return (
     <div ref={containerRef} className="relative w-full h-full overflow-hidden bg-black">
       {/* Canvas oculto para grabación */}
-      <canvas 
-        ref={canvasRef} 
-        width={1920} 
-        height={1080} 
+      <canvas
+        ref={canvasRef}
+        width={1920}
+        height={1080}
         className="hidden"
       />
-      
+
       {/* Imagen anterior (para crossfade) */}
       {prevBgImage && isTransitioning && (
         <div className={getTransitionClasses(false)}>
-          <img 
-            src={prevBgImage} 
+          <img
+            src={prevBgImage}
             alt="Previous"
             className="w-full h-full object-cover opacity-60"
           />
@@ -207,14 +207,13 @@ const LyricDisplay: FC<LyricDisplayProps> = ({ currentLyric, nextLyric, currentI
       )}
 
       {/* Imagen actual con transición */}
-      <div 
-        key={currentLyric.time} 
-        className={`absolute inset-0 transition-all duration-1000 ease-out ${
-          imageLoaded ? 'opacity-100 scale-100' : 'opacity-0 scale-105'
-        }`}
+      <div
+        key={currentLyric.time}
+        className={`absolute inset-0 transition-all duration-1000 ease-out ${imageLoaded ? 'opacity-100 scale-100' : 'opacity-0 scale-105'
+          }`}
       >
-        <img 
-          src={bgImage} 
+        <img
+          src={bgImage}
           alt={currentLyric.visualDescription}
           className="w-full h-full object-cover ken-burns"
           crossOrigin="anonymous"
@@ -222,7 +221,7 @@ const LyricDisplay: FC<LyricDisplayProps> = ({ currentLyric, nextLyric, currentI
         />
         {/* Overlay con gradiente mejorado */}
         <div className="absolute inset-0 bg-gradient-to-t from-black via-black/30 to-black/50" />
-        
+
         {/* Efectos de brillo navideño */}
         <div className="absolute inset-0 bg-gradient-radial from-yellow-500/10 via-transparent to-transparent opacity-50" />
       </div>
@@ -248,7 +247,7 @@ const LyricDisplay: FC<LyricDisplayProps> = ({ currentLyric, nextLyric, currentI
       {/* Capa de texto */}
       <div className="absolute inset-0 flex flex-col items-center justify-center p-8 z-20">
         <div className="max-w-5xl w-full text-center">
-          
+
           {/* Indicador de sección con estilo mejorado */}
           <div className="mb-6 flex items-center justify-center gap-3">
             <span className="h-px w-12 bg-gradient-to-r from-transparent to-yellow-400" />
@@ -259,10 +258,10 @@ const LyricDisplay: FC<LyricDisplayProps> = ({ currentLyric, nextLyric, currentI
           </div>
 
           {/* Letra principal con animación mejorada */}
-          <h1 
+          <h1
             key={currentLyric.text}
             className="mb-8 text-5xl md:text-7xl lg:text-8xl font-bold font-['Quicksand'] text-white leading-tight animate-[fadeInScale_0.6s_ease-out]"
-            style={{ 
+            style={{
               textShadow: '0 0 40px rgba(255,215,0,0.4), 0 0 80px rgba(255,215,0,0.2), 4px 4px 0 #000, -2px -2px 0 #000',
             }}
           >
@@ -279,7 +278,7 @@ const LyricDisplay: FC<LyricDisplayProps> = ({ currentLyric, nextLyric, currentI
           )}
         </div>
       </div>
-      
+
       {/* Bordes decorativos con efecto de viñeta */}
       <div className="absolute inset-0 pointer-events-none z-10">
         <div className="absolute top-0 left-0 w-full h-40 bg-gradient-to-b from-black/90 via-black/50 to-transparent" />

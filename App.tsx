@@ -10,7 +10,7 @@ function App() {
   const displayRef = useRef<HTMLDivElement>(null);
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const chunksRef = useRef<Blob[]>([]);
-  
+
   const [audioSrc, setAudioSrc] = useState<string | null>(null);
   const [currentLyric, setCurrentLyric] = useState<LyricLine | null>(null);
   const [nextLyric, setNextLyric] = useState<LyricLine | null>(null);
@@ -18,7 +18,7 @@ function App() {
   const [isRecording, setIsRecording] = useState(false);
   const [recordingStatus, setRecordingStatus] = useState<'idle' | 'recording' | 'processing' | 'done'>('idle');
   const [autoRecord, setAutoRecord] = useState(true);
-  
+
   const [playerState, setPlayerState] = useState<PlayerState>({
     isPlaying: false,
     currentTime: 0,
@@ -41,7 +41,7 @@ function App() {
 
     chunksRef.current = [];
     setRecordingStatus('recording');
-    
+
     try {
       // Solicitar captura de pantalla completa con audio
       const screenStream = await navigator.mediaDevices.getDisplayMedia({
@@ -100,7 +100,7 @@ function App() {
       mediaRecorderRef.current = mediaRecorder;
       mediaRecorder.start(100); // Capturar cada 100ms para mayor fluidez
       setIsRecording(true);
-      
+
     } catch (error) {
       console.error('Error al iniciar grabación:', error);
       setRecordingStatus('idle');
@@ -167,7 +167,7 @@ function App() {
   // Animation Loop for smoother updates than timeupdate event
   useEffect(() => {
     let animationFrameId: number;
-    
+
     const loop = () => {
       updateSync();
       animationFrameId = requestAnimationFrame(loop);
@@ -213,11 +213,25 @@ function App() {
       setCurrentLyric(null);
       setNextLyric(LYRICS[0]);
       setCurrentIndex(-1);
-      
+
       // Detener grabación si está activa
       if (isRecording) {
         stopRecording();
       }
+    }
+  };
+
+  const handleRewind = () => {
+    if (audioRef.current) {
+      audioRef.current.currentTime = Math.max(0, audioRef.current.currentTime - 10);
+      updateSync();
+    }
+  };
+
+  const handleForward = () => {
+    if (audioRef.current) {
+      audioRef.current.currentTime = Math.min(audioRef.current.duration, audioRef.current.currentTime + 10);
+      updateSync();
     }
   };
 
@@ -230,7 +244,7 @@ function App() {
 
   return (
     <div className="relative w-full h-screen bg-slate-900 flex flex-col items-center justify-center font-sans overflow-hidden">
-      
+
       {/* Header / Upload (Visible if no audio) */}
       {!audioSrc && (
         <div className="relative z-50 bg-white/10 backdrop-blur-lg p-8 rounded-2xl border border-white/20 text-center max-w-md mx-4 shadow-2xl">
@@ -241,23 +255,23 @@ function App() {
           <p className="text-gray-300 mb-6 text-sm">
             Sube tu archivo .mp3 para generar el video musical automáticamente sincronizado con las imágenes.
           </p>
-          
+
           <label className="block w-full cursor-pointer">
             <span className="sr-only">Elegir audio</span>
-            <input 
-              type="file" 
+            <input
+              type="file"
               accept="audio/*"
               onChange={handleFileUpload}
               className="block w-full text-sm text-gray-400 file:mr-4 file:py-2.5 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-yellow-500 file:text-black hover:file:bg-yellow-400 file:cursor-pointer transition-all"
             />
           </label>
-          
+
           {/* Botón alternativo más visible */}
           <div className="mt-4">
             <label className="inline-block px-6 py-3 bg-yellow-500 hover:bg-yellow-400 text-black font-bold rounded-full cursor-pointer transition-all transform hover:scale-105">
               📁 Seleccionar archivo MP3
-              <input 
-                type="file" 
+              <input
+                type="file"
                 accept="audio/*"
                 onChange={handleFileUpload}
                 className="hidden"
@@ -271,14 +285,14 @@ function App() {
       {audioSrc && (
         <>
           <div ref={displayRef} className="absolute inset-0">
-            <LyricDisplay 
-              currentLyric={currentLyric} 
-              nextLyric={nextLyric} 
+            <LyricDisplay
+              currentLyric={currentLyric}
+              nextLyric={nextLyric}
               currentIndex={currentIndex}
               canvasRef={canvasRef}
             />
           </div>
-          
+
           {/* Indicador de grabación */}
           {isRecording && (
             <div className="absolute top-4 right-4 z-50 flex items-center gap-2 bg-red-600 px-4 py-2 rounded-full shadow-lg shadow-red-500/50">
@@ -286,16 +300,15 @@ function App() {
               <span className="text-white font-bold text-sm tracking-wide">● REC</span>
             </div>
           )}
-          
+
           {/* Panel de grabación */}
           <div className="absolute top-4 left-4 z-50 flex flex-col gap-2">
             <button
               onClick={isRecording ? stopRecording : startRecording}
-              className={`px-5 py-2.5 rounded-full font-bold text-sm transition-all shadow-lg flex items-center gap-2 ${
-                isRecording 
-                  ? 'bg-red-600 hover:bg-red-700 text-white shadow-red-500/30' 
+              className={`px-5 py-2.5 rounded-full font-bold text-sm transition-all shadow-lg flex items-center gap-2 ${isRecording
+                  ? 'bg-red-600 hover:bg-red-700 text-white shadow-red-500/30'
                   : 'bg-gradient-to-r from-red-500 to-pink-500 hover:from-red-600 hover:to-pink-600 text-white'
-              }`}
+                }`}
             >
               {isRecording ? (
                 <>
@@ -309,42 +322,44 @@ function App() {
                 </>
               )}
             </button>
-            
+
             {!isRecording && recordingStatus === 'idle' && (
               <p className="text-white/70 text-xs max-w-48 bg-black/50 px-3 py-1.5 rounded-lg backdrop-blur-sm">
                 💡 Selecciona esta pestaña y activa "Compartir audio"
               </p>
             )}
-            
+
             {recordingStatus === 'processing' && (
               <span className="px-4 py-2 bg-yellow-500/90 rounded-full text-black text-sm font-semibold animate-pulse">
                 ⏳ Procesando...
               </span>
             )}
-            
+
             {recordingStatus === 'done' && (
               <span className="px-4 py-2 bg-green-500 rounded-full text-white text-sm font-semibold shadow-lg shadow-green-500/30">
                 ✓ Video guardado
               </span>
             )}
           </div>
-          
-          <Controls 
+
+          <Controls
             playerState={playerState}
             onPlayPause={togglePlay}
             onSeek={handleSeek}
             onReset={handleReset}
+            onRewind={handleRewind}
+            onForward={handleForward}
             audioRef={audioRef}
           />
-          
-          <audio 
-            ref={audioRef} 
-            src={audioSrc} 
+
+          <audio
+            ref={audioRef}
+            src={audioSrc}
             onEnded={() => setPlayerState(p => ({ ...p, isPlaying: false, hasEnded: true }))}
             onLoadedMetadata={() => {
-               if(audioRef.current) {
-                 setPlayerState(p => ({...p, duration: audioRef.current?.duration || 0}))
-               }
+              if (audioRef.current) {
+                setPlayerState(p => ({ ...p, duration: audioRef.current?.duration || 0 }))
+              }
             }}
           />
         </>
@@ -352,7 +367,7 @@ function App() {
 
       {/* Snowflake Overlay Effect (CSS Only) */}
       <div className="pointer-events-none fixed inset-0 z-40 opacity-30 mix-blend-screen">
-         {/* We could add complex particle effects here, but keeping it simple for performance */}
+        {/* We could add complex particle effects here, but keeping it simple for performance */}
       </div>
     </div>
   );

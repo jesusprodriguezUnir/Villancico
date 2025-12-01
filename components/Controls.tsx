@@ -6,15 +6,19 @@ interface ControlsProps {
   onPlayPause: () => void;
   onSeek: (e: ChangeEvent<HTMLInputElement>) => void;
   onReset: () => void;
+  onRewind: () => void;
+  onForward: () => void;
   audioRef: RefObject<HTMLAudioElement>;
 }
 
-const Controls: FC<ControlsProps> = ({ 
-  playerState, 
-  onPlayPause, 
-  onSeek, 
+const Controls: FC<ControlsProps> = ({
+  playerState,
+  onPlayPause,
+  onSeek,
   onReset,
-  audioRef 
+  onRewind,
+  onForward,
+  audioRef
 }) => {
   const formatTime = (time: number) => {
     const mins = Math.floor(time / 60);
@@ -41,7 +45,17 @@ const Controls: FC<ControlsProps> = ({
 
         {/* Buttons */}
         <div className="flex items-center justify-center gap-6">
-          <button 
+          <button
+            onClick={onRewind}
+            className="p-2 text-gray-400 hover:text-white transition-colors hover:scale-110"
+            title="Retroceder 10s"
+          >
+            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12.066 11.2a1 1 0 000 1.6l5.334 4A1 1 0 0019 16V8a1 1 0 00-1.6-.8l-5.333 4zM4.066 11.2a1 1 0 000 1.6l5.334 4A1 1 0 0011 16V8a1 1 0 00-1.6-.8l-5.334 4z" />
+            </svg>
+          </button>
+
+          <button
             onClick={onReset}
             className="p-2 text-gray-400 hover:text-white transition-colors"
             title="Reiniciar"
@@ -51,7 +65,7 @@ const Controls: FC<ControlsProps> = ({
             </svg>
           </button>
 
-          <button 
+          <button
             onClick={onPlayPause}
             className="w-12 h-12 flex items-center justify-center rounded-full bg-yellow-500 text-black hover:bg-yellow-400 hover:scale-105 transition-all shadow-lg shadow-yellow-500/20"
           >
@@ -64,6 +78,16 @@ const Controls: FC<ControlsProps> = ({
                 <path d="M8 5v14l11-7z" />
               </svg>
             )}
+          </button>
+
+          <button
+            onClick={onForward}
+            className="p-2 text-gray-400 hover:text-white transition-colors hover:scale-110"
+            title="Adelantar 10s"
+          >
+            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 5l7 7-7 7M5 5l7 7-7 7" />
+            </svg>
           </button>
         </div>
       </div>
