@@ -6,19 +6,17 @@ import Controls from './components/Controls';
 
 function App() {
   const audioRef = useRef<HTMLAudioElement>(null);
-  const canvasRef = useRef<HTMLCanvasElement>(null);
   const displayRef = useRef<HTMLDivElement>(null);
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const chunksRef = useRef<Blob[]>([]);
 
-  const [audioSrc, setAudioSrc] = useState<string | null>(null);
+  // Default audio source - assumes file exists at public/audio/villancico.mp3
+  const [audioSrc] = useState<string | null>('/audio/villancico.mp3');
   const [currentLyric, setCurrentLyric] = useState<LyricLine | null>(null);
   const [nextLyric, setNextLyric] = useState<LyricLine | null>(null);
   const [currentIndex, setCurrentIndex] = useState<number>(-1);
   const [isRecording, setIsRecording] = useState(false);
   const [recordingStatus, setRecordingStatus] = useState<'idle' | 'recording' | 'processing' | 'done'>('idle');
-  const [autoRecord, setAutoRecord] = useState(true);
-  const [fastGenMode, setFastGenMode] = useState(false);
 
   const [playerState, setPlayerState] = useState<PlayerState>({
     isPlaying: false,
@@ -27,21 +25,14 @@ function App() {
     hasEnded: false
   });
 
-  const handleFileUpload = (event: ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (file) {
-      const url = URL.createObjectURL(file);
-      setAudioSrc(url);
-    }
-  };
-
-  const startRecording = useCallback(async () => {
+  const startRecordingAndPlay = useCallback(async () => {
     if (isRecording) return;
 
     chunksRef.current = [];
     setRecordingStatus('recording');
 
     try {
+      // 1. Ask for screen permission first
       const screenStream = await navigator.mediaDevices.getDisplayMedia({
         video: {
           displaySurface: 'browser',
@@ -49,19 +40,14 @@ function App() {
           height: { ideal: 1080, max: 1080 },
           frameRate: { ideal: 30, max: 60 }
         },
-        audio: {
-          echoCancellation: false,
-          noiseSuppression: false,
-          autoGainControl: false
-        },
+        audio: false, // AUDIO DISABLED
         // @ts-ignore
         preferCurrentTab: true,
         selfBrowserSurface: 'include',
-        systemAudio: 'include'
+        systemAudio: 'exclude'
       });
 
-      const mimeType = 'video/webm;codecs=vp8,opus';
-
+      const mimeType = 'video/webm;codecs=vp8'; // Video only
       const mediaRecorder = new MediaRecorder(screenStream, {
         mimeType,
         videoBitsPerSecond: 8000000,
@@ -79,12 +65,6 @@ function App() {
 
         setRecordingStatus('done');
         screenStream.getTracks().forEach(track => track.stop());
-
-        if (fastGenMode && audioRef.current) {
-          audioRef.current.playbackRate = 1.0;
-          audioRef.current.volume = 1.0;
-          setFastGenMode(false);
-        }
       };
 
       screenStream.getVideoTracks()[0].onended = () => {
@@ -94,26 +74,34 @@ function App() {
       };
 
       mediaRecorderRef.current = mediaRecorder;
-      mediaRecorder.start(250); // Chunks cada 250ms para mejor navegación
+      mediaRecorder.start(250);
       setIsRecording(true);
 
-    } catch (error) {
-      console.error('Error al iniciar grabación:', error);
-      setRecordingStatus('idle');
-      setFastGenMode(false);
+      // 2. Start Audio after recording is ready (with speedup)
       if (audioRef.current) {
-        audioRef.current.playbackRate = 1.0;
-        audioRef.current.volume = 1.0;
+        audioRef.current.currentTime = 0;
+        audioRef.current.playbackRate = 1.15; // SPEED UP
+        await audioRef.current.play();
+        setPlayerState(prev => ({ ...prev, isPlaying: true }));
       }
-      alert('⚠️ IMPORTANTE PARA GRABAR CON AUDIO:\n\n1. Selecciona "Pestaña de Chrome"\n2. Elige ESTA pestaña\n3. ✅ ACTIVA la casilla "Compartir audio de la pestaña"\n4. Haz clic en "Compartir"\n\n🔊 El audio SOLO se grabará si activas esa casilla!');
+
+    } catch (error) {
+      console.error('Error starting recording:', error);
+      setRecordingStatus('idle');
+      alert('⚠️ Debes seleccionar la pestaña para que funcione.');
     }
-  }, [isRecording, fastGenMode]);
+  }, [isRecording]);
 
   const stopRecording = useCallback(() => {
     if (mediaRecorderRef.current && isRecording) {
       setRecordingStatus('processing');
       mediaRecorderRef.current.stop();
       setIsRecording(false);
+
+      if (audioRef.current) {
+        audioRef.current.pause();
+        setPlayerState(prev => ({ ...prev, isPlaying: false }));
+      }
     }
   }, [isRecording]);
 
@@ -174,15 +162,14 @@ function App() {
     return () => cancelAnimationFrame(animationFrameId);
   }, [playerState.isPlaying, updateSync]);
 
+
   const togglePlay = () => {
+    // Manual play (without recording) for testing if needed
     if (audioRef.current) {
       if (playerState.isPlaying) {
         audioRef.current.pause();
       } else {
         audioRef.current.play();
-        if (autoRecord && !isRecording && recordingStatus === 'idle' && !fastGenMode) {
-          setTimeout(() => startRecording(), 500);
-        }
       }
       setPlayerState(prev => ({ ...prev, isPlaying: !prev.isPlaying }));
     }
@@ -201,8 +188,6 @@ function App() {
     if (audioRef.current) {
       audioRef.current.currentTime = 0;
       audioRef.current.pause();
-      audioRef.current.playbackRate = 1.0;
-      audioRef.current.volume = 1.0;
       setPlayerState({
         isPlaying: false,
         currentTime: 0,
@@ -212,13 +197,6 @@ function App() {
       setCurrentLyric(null);
       setNextLyric(LYRICS[0]);
       setCurrentIndex(-1);
-
-      if (isRecording) {
-        stopRecording();
-      }
-
-      setRecordingStatus('idle');
-      setFastGenMode(false);
     }
   };
 
@@ -236,6 +214,7 @@ function App() {
     }
   };
 
+  // Auto-stop recording when audio ends
   useEffect(() => {
     if (playerState.hasEnded && isRecording) {
       stopRecording();
@@ -245,49 +224,32 @@ function App() {
   return (
     <div className="relative w-full h-screen bg-slate-900 flex flex-col items-center justify-center font-sans overflow-hidden">
 
-      {!audioSrc && (
+      {/* Intro Screen - ONLY if not recording and not playing */}
+      {(!isRecording && !playerState.isPlaying) && (
         <div className="relative z-50 bg-white/10 backdrop-blur-lg p-8 rounded-2xl border border-white/20 text-center max-w-md mx-4 shadow-2xl">
           <div className="mb-6 text-yellow-400 text-6xl">🎄</div>
           <h1 className="text-3xl font-bold mb-2 text-white" style={{ fontFamily: "'Mountains of Christmas', cursive" }}>
-            Navidades - Video Maker
+            Navidades - Karaoke Recorder
           </h1>
-          <p className="text-gray-300 mb-4 text-sm">
-            Sube tu MP3 y presiona PLAY. La grabación inicia automáticamente.
+          <p className="text-gray-300 mb-6 text-sm">
+            Pulsa el botón para iniciar la grabación automática.
           </p>
 
-          <div className="bg-yellow-500/10 border border-yellow-500/30 rounded-lg p-3 mb-4">
-            <p className="text-yellow-300 text-xs font-semibold">
-              🔊 CRÍTICO: Activa "Compartir audio de la pestaña" cuando Chrome pregunte
+          <div className="bg-yellow-500/10 border border-yellow-500/30 rounded-lg p-3 mb-6">
+            <p className="text-yellow-300 text-xs font-semibold text-left">
+              Instrucciones:<br />
+              1. Pulsa "Grabar Villancico"<br />
+              2. Selecciona la pestaña "Pestaña de Chrome" -&gt; "Navidades"<br />
+              3. Pulsa "Compartir"
             </p>
           </div>
 
-          <div className="bg-red-500/10 border border-red-500/30 rounded-lg p-3 mb-4">
-            <p className="text-red-300 text-xs font-semibold">
-              ⚠️ NOTA: El video se puede reproducir pero no adelantar. Es una limitación de WebM. Para ver partes específicas, usa los controles DURANTE la grabación.
-            </p>
-          </div>
-
-          <label className="block w-full cursor-pointer">
-            <span className="sr-only">Elegir audio</span>
-            <input
-              type="file"
-              accept="audio/*"
-              onChange={handleFileUpload}
-              className="block w-full text-sm text-gray-400 file:mr-4 file:py-2.5 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-yellow-500 file:text-black hover:file:bg-yellow-400 file:cursor-pointer transition-all"
-            />
-          </label>
-
-          <div className="mt-4">
-            <label className="inline-block px-6 py-3 bg-yellow-500 hover:bg-yellow-400 text-black font-bold rounded-full cursor-pointer transition-all transform hover:scale-105">
-              📁 Seleccionar MP3
-              <input
-                type="file"
-                accept="audio/*"
-                onChange={handleFileUpload}
-                className="hidden"
-              />
-            </label>
-          </div>
+          <button
+            onClick={startRecordingAndPlay}
+            className="w-full px-8 py-4 bg-gradient-to-r from-red-600 to-red-700 hover:from-red-500 hover:to-red-600 text-white font-bold rounded-xl shadow-lg hover:shadow-red-600/50 transform hover:scale-105 transition-all text-lg flex items-center justify-center gap-2"
+          >
+            <span>⏺️</span> Grabar Villancico
+          </button>
         </div>
       )}
 
@@ -298,13 +260,13 @@ function App() {
               currentLyric={currentLyric}
               nextLyric={nextLyric}
               currentIndex={currentIndex}
-              canvasRef={canvasRef}
             />
           </div>
 
           {isRecording && (
             <div className="absolute top-4 right-4 z-50 flex items-center gap-2">
               <div className="w-3 h-3 bg-red-600 rounded-full animate-pulse" />
+              <span className="text-white text-xs font-bold bg-red-600/50 px-2 py-1 rounded">GRABANDO</span>
             </div>
           )}
 
@@ -314,19 +276,13 @@ function App() {
             </div>
           )}
 
-          <Controls
-            playerState={playerState}
-            onPlayPause={togglePlay}
-            onSeek={handleSeek}
-            onReset={handleReset}
-            onRewind={handleRewind}
-            onForward={handleForward}
-            audioRef={audioRef}
-          />
+
+          {/* Controls removed as requested */}
 
           <audio
             ref={audioRef}
-            src={audioSrc}
+            src="/audio/Villancico.mp3"
+            onError={(e) => console.error("Audio error:", e)}
             onEnded={() => setPlayerState(p => ({ ...p, isPlaying: false, hasEnded: true }))}
             onLoadedMetadata={() => {
               if (audioRef.current) {

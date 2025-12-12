@@ -1,11 +1,10 @@
-import { type FC, useState, useEffect, useRef } from 'react';
+import { type FC, useState, useEffect, useRef, type RefObject } from 'react';
 import { LyricLine } from '../types';
 
 interface LyricDisplayProps {
   currentLyric: LyricLine | null;
   nextLyric: LyricLine | null;
   currentIndex: number;
-  canvasRef?: React.RefObject<HTMLCanvasElement | null>;
 }
 
 // Tipos de transiciones disponibles - más variedad para mejor calidad visual
@@ -83,7 +82,6 @@ const LyricDisplay: FC<LyricDisplayProps> = ({ currentLyric, nextLyric, currentI
           <h2 className="text-4xl font-['Mountains_of_Christmas'] text-yellow-400 mb-4 animate-pulse">
             Preparando la magia navideña...
           </h2>
-          <p className="text-gray-300 text-lg">Dale play para comenzar el villancico</p>
 
           {/* Copos de nieve animados */}
           <div className="absolute inset-0 overflow-hidden pointer-events-none">
@@ -106,10 +104,35 @@ const LyricDisplay: FC<LyricDisplayProps> = ({ currentLyric, nextLyric, currentI
     );
   }
 
-  const bgImage = `https://image.pollinations.ai/prompt/${encodeURIComponent(currentLyric.visualDescription + ", cinematic lighting, 8k, photorealistic, masterpiece, highly detailed, 4k wallpaper")}?width=1920&height=1080&nologo=true&seed=${currentLyric.time}`;
-  const prevBgImage = previousLyric
-    ? `https://image.pollinations.ai/prompt/${encodeURIComponent(previousLyric.visualDescription + ", cinematic lighting, 8k, photorealistic, masterpiece, highly detailed, 4k wallpaper")}?width=1920&height=1080&nologo=true&seed=${previousLyric.time}`
-    : null;
+  // Mapa de imágenes locales
+  const IMAGE_MAP: Record<string, string> = {
+    'navidad': '/images/navidad.png',
+    'turrones': '/images/sweets.png',
+    'vacaciones': '/images/vacation.png',
+    'colegio': '/images/school.png',
+    'luces': '/images/lights.png',
+    'arbol': '/images/tree.png',
+    'carta': '/images/letter.png',
+    'regalos': '/images/gifts.png',
+    'belen': '/images/nativity.png',
+    'cena': '/images/dinner.png',
+    'relax': '/images/relax.png',
+    'feliz': '/images/happy.png',
+    'loteria': '/images/lottery.png',
+    'pandereta': '/images/tambourine.png',
+    'baile': '/images/dance.png',
+    'familia': '/images/family.png',
+    'villancicos': '/images/choir.png',
+    'final': '/images/finale.png'
+  };
+
+  const getImageSrc = (lyric: LyricLine | null) => {
+    if (!lyric) return null;
+    return IMAGE_MAP[lyric.imageKey] || '/images/navidad.png'; // Fallback
+  };
+
+  const bgImage = getImageSrc(currentLyric);
+  const prevBgImage = getImageSrc(previousLyric);
 
   // Clases de transición según el tipo - versión mejorada con más efectos
   const getTransitionClasses = (isNew: boolean) => {
@@ -187,13 +210,7 @@ const LyricDisplay: FC<LyricDisplayProps> = ({ currentLyric, nextLyric, currentI
 
   return (
     <div ref={containerRef} className="relative w-full h-full overflow-hidden bg-black">
-      {/* Canvas oculto para grabación */}
-      <canvas
-        ref={canvasRef}
-        width={1920}
-        height={1080}
-        className="hidden"
-      />
+      {/* Canvas oculto para grabación - REMOVED FOR KARAOKE MODE */}
 
       {/* Imagen anterior (para crossfade) */}
       {prevBgImage && isTransitioning && (
